@@ -1,0 +1,14 @@
+aiohttp==3.6.2
+aiohttp_jinja2==1.2.0
+uvloop==0.14.0
+gino
+environs==8.0.0
+alembic
+sqlalchemy
+aiohttp-apispec
+marshmallow
+marshmallow_sqlalchemy
+passlib
+pyjwt==1.5.3
+aioredis
+click

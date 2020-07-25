@@ -1,0 +1,47 @@
+Metadata-Version: 2.1
+Name: gino-aiohttp
+Version: 0.1.0
+Summary: An extension for GINO to integrate with aiohttp
+Home-page: https://github.com/python-gino/gino-aiohttp
+License: BSD-3-Clause
+Keywords: sqlalchemy,python3,aiohttp,gino
+Author: Fantix King
+Author-email: fantix.king@gmail.com
+Requires-Python: >=3.5.3,<4.0.0
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Dist: aiohttp (>=3.6.2,<4.0.0)
+Requires-Dist: gino (>=1.0.0rc2,<2.0.0)
+Project-URL: Documentation, https://python-gino.readthedocs.io/
+Project-URL: Repository, https://github.com/python-gino/gino-aiohttp
+Description-Content-Type: text/markdown
+
+# gino-aiohttp
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7579f869992a4b618e115731821e43ee)](https://www.codacy.com/gh/python-gino/gino-aiohttp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=python-gino/gino-aiohttp&amp;utm_campaign=Badge_Grade)
+
+## Introduction
+
+An extension for GINO to support aiohttp.web server.
+
+## Usage
+
+The common usage looks like this:
+
+```python
+from aiohttp import web
+from gino.ext.aiohttp import Gino
+
+db = Gino()
+app = web.Application(middlewares=[db])
+db.init_app(app)
+```
+
+
