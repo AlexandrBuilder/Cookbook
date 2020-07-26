@@ -79,3 +79,10 @@ class RecipeStep(db.Model):
     number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(3000), nullable=False)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
+
+
+class Image(db.Model):
+    __tablename__ = "images"
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
