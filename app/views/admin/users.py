@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_apispec import docs, request_schema
 
 from app.models.models import User
-from app.schemas.schemas import UserChangeStatusSchema, UserSchema
+from app.schemas.users import UserChangeStatusSchema, UserSchema
 from app.auth import has_role, not_blocked_user
 from app.utils.response import to_json
 

@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_apispec import docs, request_schema
 
 from app.models.models import User
-from app.schemas.schemas import UserRegistrationAndAuthSchema
+from app.schemas.users import UserRegistrationAndAuthSchema
 from app.auth import generate_jwt, not_authorized, authorized, deactivate_jwt
 
 

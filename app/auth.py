@@ -93,6 +93,7 @@ def has_role(role):
 def not_blocked_user(func):
     @functools.wraps(func)
     def decorated(request, *args, **kwargs):
+        print('asdasd')
         if not request.user:
             raise web.HTTPForbidden(reason='The method is available to an authorized user')
         if request.user.status == User.STATUS_BLOCKED:
