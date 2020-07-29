@@ -1,7 +1,7 @@
 from aiohttp import web
 from aiohttp_apispec import docs
 
-from app.auth import authorized
+from app.auth import not_blocked_user
 from app.schemas.images import ImageSchema
 from app.utils import file
 from app.models.models import Image
@@ -18,8 +18,8 @@ from app.utils.response import to_json
         'required': 'true',
     }]
 )
-@authorized
-async def images_add(request):
+@not_blocked_user
+async def image_add(request):
     data = await request.post()
     image = data['image']
     error = file.validate_extension(image.filename, ['.jpg', '.png'])
@@ -27,7 +27,7 @@ async def images_add(request):
     if error:
         raise web.HTTPBadRequest(reason=error)
 
-    filename = file.get_random_filename(image.filename) + file.get_extension(image.filename)
+    filename = file.get_random_filename() + file.get_extension(image.filename)
     file.save_file(request.app, filename, image.file)
 
     image = await Image.create(filename=filename)
@@ -37,11 +37,11 @@ async def images_add(request):
 
 @docs(
     tags=["images"],
-    summary="Get image",
-    description="Get image from server",
+    summary="View image",
+    description="View image from server",
 )
-@authorized
-async def images_get(request):
+@not_blocked_user
+async def image_view(request):
     image = await Image.query.where(Image.filename == request.match_info['filename']).gino.first_or_404()
     return web.Response(
         body=file.get_file_content(request.app, image.filename),

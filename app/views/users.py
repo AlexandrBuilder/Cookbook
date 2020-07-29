@@ -1,3 +1,5 @@
+from sqlalchemy import and_
+
 from aiohttp import web
 from aiohttp_apispec import docs, request_schema
 
@@ -12,7 +14,7 @@ from app.utils.response import to_json, to_json_list
     summary="Create new user",
     description="Create new user",
 )
-@not_authorized
+@not_blocked_user
 @request_schema(UserRegistrationAndAuthSchema())
 async def user_add(request):
     user_by_username = await User.query.where(User.username == request['data']['username']).gino.first()
@@ -31,7 +33,12 @@ async def user_add(request):
 )
 @not_blocked_user
 async def user_view(request):
-    user = await User.query.where(User.username == request.match_info['username']).gino.first_or_404()
+    user = await User \
+        .query \
+        .where(and_(User.username == request.match_info['username'], User.status == User.STATUS_ACTIVE)) \
+        .gino \
+        .first_or_404()
+
     return web.json_response(to_json(UserSchema, user))
 
 
@@ -42,6 +49,12 @@ async def user_view(request):
 )
 @not_blocked_user
 async def user_list(request):
-    user = await User.query.where(User.status == User.STATUS_ACTIVE).limit(2).gino.all()
-    return web.json_response(to_json_list(UserSchema, user))
+    user = await User \
+        .query \
+        .where(User.status == User.STATUS_ACTIVE) \
+        .order_by(User.count_recipe.desc()) \
+        .limit(10) \
+        .gino \
+        .all()
 
+    return web.json_response(to_json_list(UserSchema, user))

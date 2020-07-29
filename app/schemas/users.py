@@ -12,7 +12,7 @@ class UserRegistrationAndAuthSchema(Schema):
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         table = User.__table__
-        exclude = ("password",)
+        exclude = ('password',)
 
 
 class UserChangeStatusSchema(SQLAlchemyAutoSchema):
@@ -21,3 +21,9 @@ class UserChangeStatusSchema(SQLAlchemyAutoSchema):
 
 class UserListSchema(SQLAlchemyAutoSchema):
     collaborators = fields.List(fields.Nested(UserSchema))
+
+
+class UserRecipeSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        table = User.__table__
+        exclude = ('password', 'role')

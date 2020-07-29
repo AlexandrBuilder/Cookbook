@@ -19,15 +19,20 @@ class User(db.Model):
     password = db.Column(db.String(150))
     status = db.Column(db.String(30), nullable=False, default=STATUS_ACTIVE)
     role = db.Column(db.String(30), nullable=False, default=ROLE_USER)
-
-    def __mapper__(self):
-        pass
+    count_recipe = db.Column(db.Integer())
 
     def set_password(self, password):
         self.password = sha256_crypt.hash(password)
 
     def check_password(self, password):
         return sha256_crypt.verify(password, self.password)
+
+
+class Image(db.Model):
+    __tablename__ = "images"
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
 
 
 class Recipe(db.Model):
@@ -51,11 +56,14 @@ class Recipe(db.Model):
     created = db.Column(db.DateTime, nullable=False, index=True, default=datetime.utcnow)
     status = db.Column(db.String(30), nullable=False, default=STATUS_ACTIVE)
     type = db.Column(db.String(50), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
 
     def __init__(self, **kw):
         super().__init__(**kw)
         self._recipe_steps = []
+        self._tags = []
+        self._user = None
 
     @property
     def recipe_steps(self):
@@ -68,8 +76,24 @@ class Recipe(db.Model):
     def add_recipe_step(self, recipe_step):
         self._recipe_steps.append(recipe_step)
 
-    def add_user(self, user):
-        self.user_id = user.id
+    @property
+    def tags(self):
+        return self._tags
+
+    @tags.setter
+    def tags(self, tags):
+        self._tags.append(tags)
+
+    def add_tag(self, tag):
+        self._tags.append(tag)
+
+    @property
+    def user(self):
+        return self._user
+
+    @user.setter
+    def user(self, user):
+        self._user = user
 
 
 class RecipeStep(db.Model):
@@ -81,8 +105,15 @@ class RecipeStep(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
 
 
-class Image(db.Model):
-    __tablename__ = "images"
+class Tag(db.Model):
+    __tablename__ = "tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+
+
+class RecipeXTag(db.Model):
+    __tablename__ = 'recipe_x_tag'
+
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'))
