@@ -28,5 +28,4 @@ pip-delete-this-directory.txt
 .idea/
 venv/
 
-#Upload files
-*.xls
+logs/

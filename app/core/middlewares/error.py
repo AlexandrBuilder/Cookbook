@@ -19,4 +19,5 @@ async def error_middleware(request, handler):
         status = 500
         message = str(ex) if request.app['dev'] else 'Server error'
         message += ' \n {}'.format(traceback.format_exc())
+
     return web.json_response({'error': message}, status=status)

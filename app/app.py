@@ -1,3 +1,6 @@
+import os
+import logging
+from logging.handlers import RotatingFileHandler
 import aioredis
 
 from aiohttp import web
@@ -31,5 +34,14 @@ async def create_app(dev=True):
 
     setup_routes(app)
     setup_aiohttp_apispec(app, swagger_path="/api/docs")
+
+    if not dev:
+        if not os.path.exists(Config.LOG_FOLDER):
+            os.mkdir(Config.LOG_FOLDER)
+        file_handler = RotatingFileHandler(Config.LOG_FILE, maxBytes=10240, backupCount=10)
+        file_handler.setFormatter(
+            logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
 
     return app
