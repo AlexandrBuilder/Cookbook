@@ -50,11 +50,18 @@ class RecipeCreateSchema(SQLAlchemyAutoSchema):
 
 
 class RecipeLifterSchema(Schema):
+    SORT_DESC = 'desc'
+    SORT_ASC = 'asc'
+
+    SORTS = [SORT_ASC, SORT_DESC]
+
     tag = fields.Str(validate=validate.Length(max=100))
     name = fields.Str(validate=validate.Length(max=250))
     type = fields.Str(validate=validate.OneOf(Recipe.TYPES))
     user_id = fields.Int()
     has_image = fields.Bool()
-    created = fields.Date()
+    created_sort = fields.Str(validate=validate.OneOf(SORTS))
+    name_sort = fields.Str(validate=validate.OneOf(SORTS))
+    count_likes_sort = fields.Str(validate=validate.OneOf(SORTS))
     page = fields.Int(missing=1)
     per_page = fields.Int(missing=10, validate=validate.Range(max=100))

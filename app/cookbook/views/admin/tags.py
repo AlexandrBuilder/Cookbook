@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_apispec import docs, request_schema
 
 from app.models.models import Tag, User
-from app.schemas.tags import TagCreateSchema, TagSchema
+from app.cookbook.schemas import TagCreateSchema, TagSchema
 from app.utils.response import to_json
 from app.auth import not_blocked_user, has_role
 

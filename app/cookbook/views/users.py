@@ -4,7 +4,7 @@ from aiohttp import web
 from aiohttp_apispec import docs, request_schema
 
 from app.models.models import User
-from app.schemas.users import UserRegistrationAndAuthSchema, UserSchema
+from app.cookbook.schemas import UserRegistrationAndAuthSchema, UserSchema
 from app.auth import not_authorized, not_blocked_user
 from app.utils.response import to_json, to_json_list
 
@@ -14,7 +14,7 @@ from app.utils.response import to_json, to_json_list
     summary="Create new user",
     description="Create new user",
 )
-@not_blocked_user
+@not_authorized
 @request_schema(UserRegistrationAndAuthSchema())
 async def user_add(request):
     user_by_username = await User.query.where(User.username == request['data']['username']).gino.first()

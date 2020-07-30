@@ -3,7 +3,7 @@ from aiohttp_apispec import docs, request_schema
 from sqlalchemy import func
 
 from app.models.models import Recipe, RecipeStep, RecipeXTag, Tag, User, Image
-from app.schemas.recipes import RecipeCreateSchema, RecipeSchema, RecipeLifterSchema
+from app.cookbook.schemas import RecipeCreateSchema, RecipeSchema, RecipeLifterSchema
 from app.utils.response import to_json, to_json_list
 from app.utils.pagination import pagination
 from app.auth import not_blocked_user
@@ -55,7 +55,7 @@ async def recipe_add(request):
         recipe.add_tag(tag)
 
     count_recipe_user = await db.select([func.count(Recipe.id)]).where(Recipe.user_id == request.user.id).gino.scalar()
-    await request.user.update(count_recipe=count_recipe_user).apply()
+    await request.user.update(count_recipes=count_recipe_user).apply()
 
     return web.json_response(to_json(RecipeSchema, recipe), status=201)
 
@@ -96,8 +96,10 @@ async def recipe_view(request):
 @request_schema(RecipeLifterSchema())
 async def recipe_list(request):
     query = Recipe \
-        .select('id') \
-        .select_from(Recipe.outerjoin(User).outerjoin(RecipeXTag).outerjoin(Tag)) \
+        .outerjoin(User) \
+        .outerjoin(RecipeXTag) \
+        .outerjoin(Tag) \
+        .select() \
         .where(Recipe.status == Recipe.STATUS_ACTIVE)
 
     if 'tag' in request['data']:
@@ -121,22 +123,29 @@ async def recipe_list(request):
         subquery = Recipe.image_id.isnot(None) if request['data']['has_image'] else Recipe.image_id.is_(None)
         query = query.where(subquery)
 
-    if 'created' in request['data']:
-        query = query.where(func.DATE(Recipe.created) == request['data']['created'])
+    if 'created_sort' in request['data']:
+        subquery = Recipe.created.asc() \
+            if request['data']['created_sort'] == RecipeLifterSchema.SORT_ASC \
+            else Recipe.created.desc()
+        query = query.order_by(subquery)
+
+    if 'name_sort' in request['data']:
+        subquery = Recipe.name.asc() \
+            if request['data']['name_sort'] == RecipeLifterSchema.SORT_ASC \
+            else Recipe.name.desc()
+        query = query.order_by(subquery)
+
+    if 'count_likes_sort' in request['data']:
+        subquery = Recipe.count_likes.asc() \
+            if request['data']['count_likes_sort'] == RecipeLifterSchema.SORT_ASC \
+            else Recipe.count_likes.desc()
+        query = query.order_by(subquery)
 
     offset, limit = pagination(request['data']['page'], request['data']['per_page'])
 
-    recipes = await query.group_by(Recipe.id).offset(offset).limit(limit).gino.all()
-    ids = [recipe[0] for recipe in recipes]
-
-    query = Recipe \
-        .outerjoin(User) \
-        .outerjoin(RecipeXTag) \
-        .outerjoin(Tag) \
-        .select()
+    query = query.offset(offset).limit(limit)
 
     recipes = await query \
-        .where(Recipe.id.in_(ids)) \
         .gino \
         .load(Recipe.distinct(Recipe.id).load(add_tag=Tag).load(user=User)) \
         .all()

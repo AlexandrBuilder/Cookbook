@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_apispec import docs
 
 from app.auth import not_blocked_user
-from app.schemas.images import ImageSchema
+from app.cookbook.schemas import ImageSchema
 from app.utils import file
 from app.models.models import Image
 from app.utils.response import to_json
