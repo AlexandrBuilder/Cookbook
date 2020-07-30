@@ -1,12 +1,12 @@
 from sqlalchemy import and_
 
 from aiohttp import web
-from aiohttp_apispec import docs, request_schema
+from aiohttp_apispec import docs, request_schema, response_schema
 
 from app.models.models import Recipe, SelectedRecipe
-from app.cookbook.schemas import SelectedRecipeCreateSchema, SelectedRecipeSchema
-from app.utils.response import to_json
-from app.auth import not_blocked_user
+from app.cookbook.schemas.selected_recipes import SelectedRecipeCreateSchema, SelectedRecipeSchema
+from app.utils.response import to_dict
+from app.auth.decorators import not_blocked_user
 
 
 @docs(
@@ -16,6 +16,7 @@ from app.auth import not_blocked_user
 )
 @not_blocked_user
 @request_schema(SelectedRecipeCreateSchema())
+@response_schema(SelectedRecipeSchema, 201)
 async def selected_recipe_add(request):
     if not await Recipe.query.where(Recipe.id == request['data']['recipe_id']).gino.first():
         raise web.HTTPBadRequest(reason='Recipe with id={} does not exist'.format(request['data']['recipe_id']))
@@ -35,4 +36,4 @@ async def selected_recipe_add(request):
 
     selected_recipe = await SelectedRecipe.create(recipe_id=request['data']['recipe_id'], user_id=request.user.id)
 
-    return web.json_response(to_json(SelectedRecipeSchema, selected_recipe), status=201)
+    return web.json_response(to_dict(SelectedRecipeSchema, selected_recipe), status=201)

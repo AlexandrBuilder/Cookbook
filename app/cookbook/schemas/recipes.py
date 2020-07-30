@@ -1,25 +1,11 @@
-from marshmallow import validate, validates, ValidationError, fields, Schema, post_load
+from marshmallow import validate, validates, ValidationError, fields, Schema
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from marshmallow_sqlalchemy.fields import Nested
 
 from app.models.models import Recipe, RecipeStep
-from app.schemas.tags import TagCreateSchema, TagSchema
-from app.schemas.users import UserRecipeSchema
-
-
-class RecipeStepCreateSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        table = RecipeStep.__table__
-
-
-class RecipeSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        table = Recipe.__table__
-
-    image_id = auto_field()
-    recipe_steps = Nested(RecipeStepCreateSchema, many=True)
-    tags = Nested(TagSchema, many=True)
-    user = Nested(UserRecipeSchema, many=False)
+from app.cookbook.schemas.tags import TagCreateSchema, TagSchema
+from app.cookbook.schemas.users import UserRecipeSchema
+from app.cookbook.schemas.recipe_step import RecipeStepCreateSchema
 
 
 class RecipeCreateSchema(SQLAlchemyAutoSchema):
@@ -49,6 +35,16 @@ class RecipeCreateSchema(SQLAlchemyAutoSchema):
             raise ValidationError('The sequence has repeating tags')
 
 
+class RecipeSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        table = Recipe.__table__
+
+    image_id = auto_field()
+    recipe_steps = Nested(RecipeStepCreateSchema, many=True)
+    tags = Nested(TagSchema, many=True)
+    user = Nested(UserRecipeSchema, many=False)
+
+
 class RecipeLifterSchema(Schema):
     SORT_DESC = 'desc'
     SORT_ASC = 'asc'
@@ -65,3 +61,7 @@ class RecipeLifterSchema(Schema):
     count_likes_sort = fields.Str(validate=validate.OneOf(SORTS))
     page = fields.Int(missing=1)
     per_page = fields.Int(missing=10, validate=validate.Range(max=100))
+
+
+class RecipeChangeStatusSchema(SQLAlchemyAutoSchema):
+    status = fields.Str(required=True, validate=validate.OneOf(Recipe.STATUSES))

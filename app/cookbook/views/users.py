@@ -1,12 +1,12 @@
 from sqlalchemy import and_
 
 from aiohttp import web
-from aiohttp_apispec import docs, request_schema
+from aiohttp_apispec import docs, request_schema, response_schema
 
 from app.models.models import User
-from app.cookbook.schemas import UserRegistrationAndAuthSchema, UserSchema
-from app.auth import not_authorized, not_blocked_user
-from app.utils.response import to_json, to_json_list
+from app.cookbook.schemas.users import UserRegistrationSchema, UserSchema
+from app.auth.decorators import not_authorized, not_blocked_user
+from app.utils.response import to_dict, to_dict_list
 
 
 @docs(
@@ -15,15 +15,17 @@ from app.utils.response import to_json, to_json_list
     description="Create new user",
 )
 @not_authorized
-@request_schema(UserRegistrationAndAuthSchema())
+@request_schema(UserRegistrationSchema())
+@response_schema(UserSchema, 201)
 async def user_add(request):
-    user_by_username = await User.query.where(User.username == request['data']['username']).gino.first()
-    if user_by_username:
+    if await User.query.where(User.username == request['data']['username']).gino.first():
         raise web.HTTPBadRequest(reason='Username "{}" is already occupied'.format(request['data']['username']))
+
     user = User(username=request['data']['username'])
     user.set_password(request['data']['password'])
     user = await user.create()
-    return web.json_response(to_json(UserSchema, user), status=201)
+
+    return web.json_response(to_dict(UserSchema, user), status=201)
 
 
 @docs(
@@ -32,6 +34,7 @@ async def user_add(request):
     description="View user by username",
 )
 @not_blocked_user
+@response_schema(UserSchema, 200)
 async def user_view(request):
     user = await User \
         .query \
@@ -39,7 +42,7 @@ async def user_view(request):
         .gino \
         .first_or_404()
 
-    return web.json_response(to_json(UserSchema, user))
+    return web.json_response(to_dict(UserSchema, user))
 
 
 @docs(
@@ -48,6 +51,7 @@ async def user_view(request):
     description="List of users added by sorting added recipes",
 )
 @not_blocked_user
+@response_schema(UserSchema, 200)
 async def user_list(request):
     user = await User \
         .query \
@@ -57,4 +61,4 @@ async def user_list(request):
         .gino \
         .all()
 
-    return web.json_response(to_json_list(UserSchema, user))
+    return web.json_response(to_dict_list(UserSchema, user))

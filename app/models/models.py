@@ -15,11 +15,12 @@ class User(db.Model):
     ROLE_ADMIN = 'admin'
 
     id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(150))
-    status = db.Column(db.String(30), nullable=False, default=STATUS_ACTIVE)
-    role = db.Column(db.String(30), nullable=False, default=ROLE_USER)
-    count_recipe = db.Column(db.Integer())
+    status = db.Column(db.String(30), nullable=False, default=STATUS_ACTIVE, index=True)
+    role = db.Column(db.String(30), nullable=False, default=ROLE_USER, index=True)
+    count_recipes = db.Column(db.Integer(), default=0)
+    count_likes = db.Column(db.Integer(), default=0)
 
     def set_password(self, password):
         self.password = sha256_crypt.hash(password)
@@ -41,6 +42,8 @@ class Recipe(db.Model):
     STATUS_ACTIVE = 'active'
     STATUS_BLOCKED = 'blocked'
 
+    STATUSES = [STATUS_ACTIVE, STATUS_BLOCKED]
+
     TYPE_SALAD = 'salad'
     TYPE_FIRST_COURSE = 'first course'
     TYPE_SECOND_COURSE = 'second course'
@@ -51,13 +54,14 @@ class Recipe(db.Model):
     TYPES = [TYPE_SALAD, TYPE_FIRST_COURSE, TYPE_SECOND_COURSE, TYPE_SOUP, TYPE_DESSERT, TYPE_DRINK]
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250), nullable=False, index=True)
     description = db.Column(db.String(3000), nullable=False)
-    created = db.Column(db.DateTime, nullable=False, index=True, default=datetime.utcnow)
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     status = db.Column(db.String(30), nullable=False, default=STATUS_ACTIVE)
-    type = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
+    count_likes = db.Column(db.Integer(), default=0)
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -115,5 +119,21 @@ class Tag(db.Model):
 class RecipeXTag(db.Model):
     __tablename__ = 'recipe_x_tag'
 
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
-    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'))
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
+
+
+class Like(db.Model):
+    __tablename__ = "likes"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
+
+
+class SelectedRecipe(db.Model):
+    __tablename__ = "selected_recipes"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)

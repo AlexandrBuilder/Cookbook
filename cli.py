@@ -7,7 +7,7 @@ from app.models.models import User
 from app.models import db
 
 
-def coro(f):
+def coroutine(f):
     f = asyncio.coroutine(f)
 
     def wrapper(*args, **kwargs):
@@ -18,7 +18,7 @@ def coro(f):
 
 
 @click.group()
-@coro
+@coroutine
 async def cli():
     pass
 
@@ -26,7 +26,7 @@ async def cli():
 @cli.command()
 @click.option('--username', type=str, required=True)
 @click.option('--password', type=str, required=True)
-@coro
+@coroutine
 async def create_admin(username, password):
     await db.set_bind(Config.DATABASE_URI)
     await db.gino.create_all()
