@@ -18,10 +18,17 @@ except ImportError:
     from importlib_metadata import entry_points
 
 
+async def on_startup(app):
+    app['redis'] = await aioredis.create_redis_pool(app['config'].REDIS_URL)
+
+
+async def on_cleanup(app):
+    app['redis'].close()
+
+
 async def create_app(dev=True):
     app = web.Application()
 
-    app['redis'] = await aioredis.create_connection(Config.REDIS_URL)
     app['config'] = Config
     app['dev'] = dev
 
@@ -34,6 +41,9 @@ async def create_app(dev=True):
 
     setup_routes(app)
     setup_aiohttp_apispec(app, swagger_path="/api/docs")
+
+    app.on_startup.append(on_startup)
+    app.on_cleanup.append(on_cleanup)
 
     if not dev:
         if not os.path.exists(Config.LOG_FOLDER):

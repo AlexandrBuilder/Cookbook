@@ -67,7 +67,6 @@ async def recipe_add(request):
     description="View recipe",
 )
 @not_blocked_user
-@request_schema(RecipeCreateSchema())
 @response_schema(RecipeSchema, 200)
 async def recipe_view(request):
     query = Recipe \

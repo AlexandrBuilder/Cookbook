@@ -5,7 +5,11 @@ PREFIX_SCHEMA_BEARER = 'Bearer'
 
 
 def get_redis_jwt_key(username):
-    return 'auth:deactivate:{}'.format(username)
+    return 'auth:deactivate:{}:{}'.format(username, int(datetime.utcnow().timestamp()))
+
+
+def get_redis_jwt_key_prefix(username):
+    return 'auth:deactivate:{}:*'.format(username)
 
 
 async def deactivate_jwt(request):
@@ -29,3 +33,8 @@ def generate_jwt(request, user):
 def get_jwt_token(request):
     jwt_token = request.headers.get('authorization', None)
     return jwt_token[(len(PREFIX_SCHEMA_BEARER) + 1):] if jwt_token else None
+
+
+async def get_jwt_invalid_tokens(request, username):
+    keys = [key async for key in request.app['redis'].iscan(match=get_redis_jwt_key_prefix(username))]
+    return [] if len(keys) == 0 else await request.app['redis'].mget(*keys)
