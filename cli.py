@@ -31,13 +31,17 @@ async def create_admin(username, password):
     await db.set_bind(Config.DATABASE_URI)
     await db.gino.create_all()
 
+    if await User.query.where(User.username == username).gino.first():
+        click.echo(click.style('User "{}" already exist'.format(username), fg="red"))
+        return
+
     user = User(username=username, role=User.ROLE_ADMIN)
     user.set_password(password)
 
     await user.create()
     await db.pop_bind().close()
 
-    click.echo('User "{}" with role admin success created'.format(username))
+    click.echo(click.style('User "{}" with role admin success created'.format(username), fg="green"))
 
 
 if __name__ == '__main__':

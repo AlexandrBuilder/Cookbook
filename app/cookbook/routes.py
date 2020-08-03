@@ -13,7 +13,7 @@ def routes_list():
         {'method': 'GET', 'path': r'/api/recipes', 'view': recipes.recipe_list, 'name': 'recipe_list'},
 
         {'method': 'POST', 'path': r'/api/image/add', 'view': images.image_add, 'name': 'image_add'},
-        {'method': 'GET', 'path': r'/api/image/{filename}', 'view': images.image_view, 'name': 'image_view'},
+        {'method': 'GET', 'path': r'/api/image/{id:\d+}', 'view': images.image_view, 'name': 'image_view'},
 
         {'method': 'POST', 'path': r'/api/like/add', 'view': likes.like_add, 'name': 'like_add'},
 

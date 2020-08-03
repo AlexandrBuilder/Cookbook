@@ -14,5 +14,5 @@ class Config:
     JWT_ALGORITHM = env('JWT_ALGORITHM') or 'HS256'
     JWT_EXP_DELTA_SECONDS = env('JWT_EXP_DELTA_SECONDS') or 3000
     UPLOAD_IMAGE_FOLDER = os.path.join(basedir, 'public/images')
-    LOG_FOLDER = os.path.join(basedir, 'logs')
-    LOG_FILE = os.path.join(LOG_FOLDER, 'cookbook.log')
+    ERROR_LOG_FOLDER = os.path.join(basedir, 'logs')
+    ERROR_LOG_FILE = os.path.join(ERROR_LOG_FOLDER, 'errors.log')

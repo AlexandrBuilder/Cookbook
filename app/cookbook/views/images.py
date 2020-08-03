@@ -28,8 +28,9 @@ async def image_add(request):
     if error:
         raise web.HTTPBadRequest(reason=error)
 
-    filename = file.get_random_filename() + file.get_extension(image.filename)
-    file.save_file(request.app, filename, image.file)
+    filename = file.get_random_filename(image.filename)
+    path = file.get_image_path(request.app, filename)
+    await file.save_file(path, image.file)
 
     image = await Image.create(filename=filename)
 
@@ -41,10 +42,10 @@ async def image_add(request):
     summary="View image",
     description="View image from server",
 )
-@not_blocked_user
 async def image_view(request):
-    image = await Image.query.where(Image.filename == request.match_info['filename']).gino.first_or_404()
+    image = await Image.query.where(Image.id == int(request.match_info['id'])).gino.first_or_404()
+    path = file.get_image_path(request.app, image.filename)
     return web.Response(
-        body=file.get_file_content(request.app, image.filename),
-        content_type=file.get_image_content_type(image.filename)
+        body=await file.get_file_content(path),
+        content_type=file.get_image_content_type(path)
     )

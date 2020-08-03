@@ -1,13 +1,15 @@
+import mimetypes
 import os
 import uuid
-
-
-def get_random_filename():
-    return str(uuid.uuid4())
+import aiofiles
 
 
 def get_extension(filename):
     return os.path.splitext(filename)[-1].lower()
+
+
+def get_random_filename(filename):
+    return str(uuid.uuid4()) + get_extension(filename)
 
 
 def validate_extension(filename, extensions):
@@ -19,17 +21,18 @@ def get_image_path(app, filename):
     return os.path.join(app['config'].UPLOAD_IMAGE_FOLDER, filename)
 
 
-def save_file(app, filename, file):
-    open_file = open(get_image_path(app, filename), 'wb')
-    open_file.write(file.read())
-    open_file.close()
+async def save_file(path, file):
+    async with aiofiles.open(path, 'wb') as open_file:
+        await open_file.write(file.read())
+        await open_file.flush()
 
 
-def get_file_content(app, filename):
-    with open(get_image_path(app, filename), 'rb') as open_file:
-        bytes = open_file.read()
+async def get_file_content(path):
+    async with aiofiles.open(path, 'rb') as open_file:
+        bytes = await open_file.read()
     return bytes
 
 
-def get_image_content_type(filename):
-    return 'image/{}'.format(get_extension(filename)[1:])
+def get_image_content_type(path):
+    mimetype, _ = mimetypes.guess_type(path)
+    return mimetype

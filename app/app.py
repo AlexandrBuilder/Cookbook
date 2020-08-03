@@ -1,6 +1,3 @@
-import os
-import logging
-from logging.handlers import RotatingFileHandler
 import aioredis
 
 from aiohttp import web
@@ -11,6 +8,7 @@ from app.routes import setup_routes
 from app.models import db
 from app.core.middlewares.error import error_middleware
 from app.auth.middlewares import auth_middleware
+from app.log import AccessLogger
 
 try:
     from importlib.metadata import entry_points
@@ -27,7 +25,7 @@ async def on_cleanup(app):
 
 
 async def create_app(dev=True):
-    app = web.Application()
+    app = web.Application(handler_args={'access_log_class': AccessLogger})
 
     app['config'] = Config
     app['dev'] = dev
@@ -44,14 +42,5 @@ async def create_app(dev=True):
 
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
-
-    if not dev:
-        if not os.path.exists(Config.LOG_FOLDER):
-            os.mkdir(Config.LOG_FOLDER)
-        file_handler = RotatingFileHandler(Config.LOG_FILE, maxBytes=10240, backupCount=10)
-        file_handler.setFormatter(
-            logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
 
     return app
