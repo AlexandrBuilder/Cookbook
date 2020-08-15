@@ -1,3 +1,4 @@
+import logging
 import aioredis
 
 from aiohttp import web
@@ -8,7 +9,6 @@ from app.routes import setup_routes
 from app.models import db
 from app.core.middlewares.error import error_middleware
 from app.auth.middlewares import auth_middleware
-from app.log import AccessLogger
 
 try:
     from importlib.metadata import entry_points
@@ -24,8 +24,15 @@ async def on_cleanup(app):
     app['redis'].close()
 
 
+def setup_log(app):
+    logger = logging.getLogger('aiohttp.server')
+    handler = logging.FileHandler(app['config'].ERROR_LOG_FILE, mode='a')
+    handler.setLevel(logging.ERROR)
+    logger.addHandler(handler)
+
+
 async def create_app(dev=True):
-    app = web.Application(handler_args={'access_log_class': AccessLogger})
+    app = web.Application()
 
     app['config'] = Config
     app['dev'] = dev
@@ -42,5 +49,7 @@ async def create_app(dev=True):
 
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
+
+    setup_log(app)
 
     return app

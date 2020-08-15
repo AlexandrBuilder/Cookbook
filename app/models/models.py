@@ -3,8 +3,14 @@ from app.models import db
 from passlib.hash import sha256_crypt
 
 
-class User(db.Model):
-    __tablename__ = "users"
+class BaseModel(db.Model):
+    @classmethod
+    def insert_by_list_data(cls, data_list):
+        return cls.insert().values(data_list).returning(cls.__table__).gino.all()
+
+
+class User(BaseModel):
+    __tablename__ = 'users'
 
     STATUS_ACTIVE = 'active'
     STATUS_BLOCKED = 'blocked'
@@ -30,14 +36,14 @@ class User(db.Model):
 
 
 class Image(db.Model):
-    __tablename__ = "images"
+    __tablename__ = 'images'
 
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200), nullable=False)
 
 
 class Recipe(db.Model):
-    __tablename__ = "recipes"
+    __tablename__ = 'recipes'
 
     STATUS_ACTIVE = 'active'
     STATUS_BLOCKED = 'blocked'
@@ -65,8 +71,8 @@ class Recipe(db.Model):
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._recipe_steps = []
-        self._tags = []
+        self._recipe_steps = set()
+        self._tags = set()
         self._user = None
 
     @property
@@ -75,10 +81,11 @@ class Recipe(db.Model):
 
     @recipe_steps.setter
     def recipe_steps(self, recipe_steps):
-        self._recipe_steps.append(recipe_steps)
+        self._recipe_steps = recipe_steps
 
     def add_recipe_step(self, recipe_step):
-        self._recipe_steps.append(recipe_step)
+        print(recipe_step)
+        self._recipe_steps.add(recipe_step)
 
     @property
     def tags(self):
@@ -86,10 +93,10 @@ class Recipe(db.Model):
 
     @tags.setter
     def tags(self, tags):
-        self._tags.append(tags)
+        self._tags = tags
 
     def add_tag(self, tag):
-        self._tags.append(tag)
+        self._tags.add(tag)
 
     @property
     def user(self):
@@ -100,8 +107,8 @@ class Recipe(db.Model):
         self._user = user
 
 
-class RecipeStep(db.Model):
-    __tablename__ = "recipe_steps"
+class RecipeStep(BaseModel):
+    __tablename__ = 'recipe_steps'
 
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer, nullable=False)
@@ -109,30 +116,30 @@ class RecipeStep(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
 
 
-class Tag(db.Model):
-    __tablename__ = "tags"
+class Tag(BaseModel):
+    __tablename__ = 'tags'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
 
 
-class RecipeXTag(db.Model):
+class RecipeXTag(BaseModel):
     __tablename__ = 'recipe_x_tag'
 
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
 
 
-class Like(db.Model):
-    __tablename__ = "likes"
+class Like(BaseModel):
+    __tablename__ = 'likes'
 
     id = db.Column(db.Integer(), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
 
 
-class SelectedRecipe(db.Model):
-    __tablename__ = "selected_recipes"
+class SelectedRecipe(BaseModel):
+    __tablename__ = 'selected_recipes'
 
     id = db.Column(db.Integer(), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)

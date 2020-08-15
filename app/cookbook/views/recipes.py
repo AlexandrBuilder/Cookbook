@@ -1,6 +1,7 @@
+from sqlalchemy import func
+
 from aiohttp import web
 from aiohttp_apispec import docs, request_schema, response_schema
-from sqlalchemy import func
 
 from app.models.models import Recipe, RecipeStep, RecipeXTag, Tag, User, Image
 from app.cookbook.schemas.recipes import RecipeCreateSchema, RecipeSchema, RecipeLifterSchema
@@ -43,17 +44,15 @@ async def recipe_add(request):
     )
     recipe.user = request.user
 
-    for recipe_step in request['data']['recipe_steps']:
-        recipe_step = await RecipeStep.create(
-            number=recipe_step['number'],
-            description=recipe_step['description'],
-            recipe_id=recipe.id
-        )
-        recipe.add_recipe_step(recipe_step)
+    recipe_step_list = [
+        {'number': recipe_step['number'], 'description': recipe_step['description'], 'recipe_id': recipe.id}
+        for recipe_step in request['data']['recipe_steps']
+    ]
+    recipe.recipe_steps = await RecipeStep.insert_by_list_data(recipe_step_list)
 
-    for tag in tags:
-        await RecipeXTag.create(recipe_id=recipe.id, tag_id=tag.id)
-        recipe.add_tag(tag)
+    tag_list = [{'recipe_id': recipe.id, 'tag_id': tag.id} for tag in tags]
+    await RecipeXTag.insert_by_list_data(tag_list)
+    recipe.tags = tags
 
     count_recipe_user = await db.select([func.count(Recipe.id)]).where(Recipe.user_id == request.user.id).gino.scalar()
     await request.user.update(count_recipes=count_recipe_user).apply()
@@ -69,23 +68,26 @@ async def recipe_add(request):
 @not_blocked_user
 @response_schema(RecipeSchema, 200)
 async def recipe_view(request):
-    query = Recipe \
+    recipes = await Recipe \
         .outerjoin(User) \
         .outerjoin(RecipeStep) \
         .outerjoin(RecipeXTag) \
         .outerjoin(Tag) \
-        .select()
-
-    recipe = await query \
+        .select() \
         .where(Recipe.id == int(request.match_info['id'])) \
         .gino \
-        .load(Recipe.distinct(Recipe.id).load(add_recipe_step=RecipeStep).load(add_tag=Tag).load(user=User)) \
+        .load(
+            Recipe.distinct(Recipe.id)
+            .load(add_recipe_step=RecipeStep.distinct(RecipeStep.id))
+            .load(add_tag=Tag.distinct(Tag.id))
+            .load(user=Tag.distinct(User.id))
+        ) \
         .all()
 
-    if not recipe:
+    if not recipes:
         raise web.HTTPNotFound()
 
-    return web.json_response(to_dict(RecipeSchema, recipe[0]))
+    return web.json_response(to_dict(RecipeSchema, recipes[0]))
 
 
 @docs(
@@ -146,10 +148,14 @@ async def recipe_list(request):
     offset, limit = pagination(request['data']['page'], request['data']['per_page'])
 
     recipes = await query \
-        .offset(offset)\
+        .offset(offset) \
         .limit(limit) \
         .gino \
-        .load(Recipe.distinct(Recipe.id).load(add_tag=Tag).load(user=User)) \
+        .load(
+            Recipe.distinct(Recipe.id)
+            .load(add_tag=Tag.distinct(Tag.id))
+            .load(user=Tag.distinct(User.id))
+        ) \
         .all()
 
     return web.json_response(to_dict_list(RecipeSchema, recipes))
